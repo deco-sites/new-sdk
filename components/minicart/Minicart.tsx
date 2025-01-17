@@ -7,6 +7,7 @@ import Coupon from "./Coupon.tsx";
 import FreeShippingProgressBar from "./FreeShippingProgressBar.tsx";
 import CartItem, { Item } from "./Item.tsx";
 import { useScript } from "@deco/deco/hooks";
+
 export interface Minicart {
   /** Cart from the ecommerce platform */
   platformCart: Record<string, unknown>;
@@ -24,6 +25,7 @@ export interface Minicart {
     checkoutHref: string;
   };
 }
+
 const onLoad = (formID: string) => {
   const form = document.getElementById(formID) as HTMLFormElement;
   window.STOREFRONT.CART.dispatch(form);
@@ -58,60 +60,63 @@ const onLoad = (formID: string) => {
     },
   );
 };
+
 const sendBeginCheckoutEvent = () => {
   window.DECO.events.dispatch({
     name: "being_checkout",
     params: window.STOREFRONT.CART.getCart(),
   });
 };
-export const action = async (_props: unknown, req: Request, ctx: AppContext) =>
-  req.method === "PATCH"
-    ? ({ cart: await ctx.invoke("site/loaders/minicart.ts") }) // error fallback
-    : ({ cart: await ctx.invoke("site/actions/minicart/submit.ts") });
-export function ErrorFallback() {
-  return (
-    <div class="flex flex-col flex-grow justify-center items-center overflow-hidden w-full gap-2">
-      <div class="flex flex-col gap-1 p-6 justify-center items-center">
-        <span class="font-semibold">
-          Error while updating cart
-        </span>
-        <span class="text-sm text-center">
-          Click in the button below to retry or refresh the page
-        </span>
-      </div>
 
-      <button
-        class="btn btn-primary"
-        hx-patch={useComponent(import.meta.url)}
-        hx-swap="outerHTML"
-        hx-target="closest div"
-      >
-        Retry
-      </button>
-    </div>
-  );
+// export function ErrorFallback() {
+//   return (
+//     <div class="flex flex-col flex-grow justify-center items-center overflow-hidden w-full gap-2">
+//       <div class="flex flex-col gap-1 p-6 justify-center items-center">
+//         <span class="font-semibold">
+//           Error while updating cart
+//         </span>
+//         <span class="text-sm text-center">
+//           Click in the button below to retry or refresh the page
+//         </span>
+//       </div>
+
+//       <button
+//         class="btn btn-primary"
+//         hx-patch={useComponent(import.meta.url)}
+//         hx-swap="outerHTML"
+//         hx-target="closest div"
+//       >
+//         Retry
+//       </button>
+//     </div>
+//   );
+// }
+
+interface Props {
+  cart: Minicart;
 }
-export default function Cart(
-  {
-    cart: {
-      platformCart,
-      storefront: {
-        items,
-        total,
-        subtotal,
-        coupon,
-        discounts,
-        locale,
-        currency,
-        enableCoupon = true,
-        freeShippingTarget,
-        checkoutHref,
-      },
+
+export async function loader(_props: Props, _req: Request, ctx: AppContext) {
+  return { cart: await ctx.invoke("site/loaders/minicart.ts") };
+}
+
+export default function Cart({
+  cart: {
+    platformCart,
+    storefront: {
+      items,
+      total,
+      subtotal,
+      coupon,
+      discounts,
+      locale,
+      currency,
+      enableCoupon = true,
+      freeShippingTarget,
+      checkoutHref,
     },
-  }: {
-    cart: Minicart;
   },
-) {
+}: Props) {
   const count = items.length;
   return (
     <>
@@ -119,7 +124,7 @@ export default function Cart(
         class="contents"
         id={MINICART_FORM_ID}
         hx-sync="this:replace"
-        hx-trigger="submit, change delay:300ms"
+        hx-trigger="cartItemAdded from:body, cartItemUpdated from:body"
         hx-target="this"
         hx-indicator="this"
         hx-disabled-elt="this"

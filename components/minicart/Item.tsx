@@ -5,10 +5,12 @@ import { formatPrice } from "../../sdk/format.ts";
 import Icon from "../ui/Icon.tsx";
 import QuantitySelector from "../ui/QuantitySelector.tsx";
 import { useScript } from "@deco/deco/hooks";
+
 export type Item = AnalyticsItem & {
   listPrice: number;
   image: string;
 };
+
 export interface Props {
   item: Item;
   index: number;
@@ -21,7 +23,7 @@ const removeItemHandler = () => {
     ?.closest("fieldset")
     ?.getAttribute("data-item-id");
   if (typeof itemID === "string") {
-    window.STOREFRONT.CART.setQuantity(itemID, 0);
+    window.STOREFRONT.CART.setQuantity({ id: itemID, quantity: 0 });
   }
 };
 function CartItem({ item, index, locale, currency }: Props) {

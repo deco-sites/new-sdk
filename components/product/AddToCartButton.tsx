@@ -5,20 +5,24 @@ import { useId } from "../../sdk/useId.ts";
 import { usePlatform } from "../../sdk/usePlatform.tsx";
 import QuantitySelector from "../ui/QuantitySelector.tsx";
 import { useScript } from "@deco/deco/hooks";
+
 export interface Props extends JSX.HTMLAttributes<HTMLButtonElement> {
   product: Product;
   seller: string;
   item: AnalyticsItem;
 }
-const onClick = () => {
+
+const onClick = async () => {
   event?.stopPropagation();
   const button = event?.currentTarget as HTMLButtonElement | null;
   const container = button!.closest<HTMLDivElement>("div[data-cart-item]")!;
   const { item, platformProps } = JSON.parse(
     decodeURIComponent(container.getAttribute("data-cart-item")!),
   );
-  window.STOREFRONT.CART.addToCart(item, platformProps);
+  await window.STOREFRONT.CART.addToCart({ item, platformProps });
+  alert("Added to cart");
 };
+
 const onChange = () => {
   const input = event!.currentTarget as HTMLInputElement;
   const productID = input!
@@ -30,8 +34,9 @@ const onChange = () => {
   }
   window.STOREFRONT.CART.setQuantity(productID, quantity);
 };
+
 // Copy cart form values into AddToCartButton
-const onLoad = (id: string) => {
+const onLoad = ({ productId, id }: { productId: string; id: string }) => {
   window.STOREFRONT.CART.subscribe((sdk) => {
     const container = document.getElementById(id);
     const checkbox = container?.querySelector<HTMLInputElement>(
@@ -40,14 +45,15 @@ const onLoad = (id: string) => {
     const input = container?.querySelector<HTMLInputElement>(
       'input[type="number"]',
     );
-    const itemID = container?.getAttribute("data-item-id")!;
-    const quantity = sdk.getQuantity(itemID) || 0;
+
     if (!input || !checkbox) {
       return;
     }
-    input.value = quantity.toString();
+    
+    const quantity = sdk.getQuantity(productId);
+    input.value = quantity?.toString() || "0";
     checkbox.checked = quantity > 0;
-    // enable interactivity
+
     container?.querySelectorAll<HTMLButtonElement>("button").forEach((node) =>
       node.disabled = false
     );
@@ -56,6 +62,7 @@ const onLoad = (id: string) => {
     );
   });
 };
+
 const useAddToCart = ({ product, seller }: Props) => {
   const platform = usePlatform();
   const { additionalProperty = [], isVariantOf, productID } = product;
@@ -103,6 +110,7 @@ const useAddToCart = ({ product, seller }: Props) => {
   }
   return null;
 };
+
 function AddToCartButton(props: Props) {
   const { product, item, class: _class } = props;
   const platformProps = useAddToCart(props);
@@ -138,7 +146,7 @@ function AddToCartButton(props: Props) {
 
       <script
         type="module"
-        dangerouslySetInnerHTML={{ __html: useScript(onLoad, id) }}
+        dangerouslySetInnerHTML={{ __html: useScript(onLoad, {id, productId: product.productID}) }}
       />
     </div>
   );
