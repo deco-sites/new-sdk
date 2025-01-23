@@ -1,9 +1,9 @@
+import { useScript } from "@deco/deco/hooks";
 import { type JSX } from "preact";
 import { clx } from "../../sdk/clx.ts";
 import { useId } from "../../sdk/useId.ts";
-import { useScript } from "@deco/deco/hooks";
+
 const onClick = (delta: number) => {
-  // doidera!
   event!.stopPropagation();
   const button = event!.currentTarget as HTMLButtonElement;
   const input = button.parentElement
@@ -13,9 +13,27 @@ const onClick = (delta: number) => {
   input.value = `${Math.min(Math.max(input.valueAsNumber + delta, min), max)}`;
   input.dispatchEvent(new Event("change", { bubbles: true }));
 };
-function QuantitySelector(
-  { id = useId(), disabled, ...props }: JSX.IntrinsicElements["input"],
-) {
+
+const onChange = () => {
+  event!.stopPropagation();
+  const input = event!.currentTarget as HTMLInputElement;
+  const quantity = Number(input.value) ?? 0;
+
+  const itemId = input?.closest("fieldset")?.getAttribute("data-item-id");
+
+  if (!itemId) return;
+
+  window.STOREFRONT.CART.setQuantity({
+    itemId,
+    quantity,
+  });
+};
+
+function QuantitySelector({
+  id = useId(),
+  disabled,
+  ...props
+}: JSX.IntrinsicElements["input"]) {
   return (
     <div class="join border rounded w-full">
       <button
@@ -43,6 +61,7 @@ function QuantitySelector(
           disabled={disabled}
           inputMode="numeric"
           type="number"
+          hx-on:change={useScript(onChange)}
           {...props}
         />
       </div>

@@ -1,4 +1,4 @@
-import type { AppContext } from "apps/shopify/mod.ts";
+import type { AppContext } from "./index.ts";
 import type { AddToCartProps } from "../../../actions/minicart/addToCart.ts";
 
 export default async function addToCart(

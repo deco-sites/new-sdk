@@ -19,27 +19,27 @@ export const action = async (props: Props, req: Request, ctx: AppContext) => {
   const form = await req.formData();
   const query = `${form.get(NAME ?? "q")}`;
   // @ts-expect-error This is a dynamic resolved loader
-  const suggestion = await ctx.invoke(__resolveType, {
-    ...loaderProps,
-    query,
-  }) as Suggestion | null;
-  return { suggestion };
+  // const suggestion = await ctx.invoke(__resolveType, {
+  //   ...loaderProps,
+  //   query,
+  // }) as Suggestion | null;
+  return { suggestion: null };
 };
 export const loader = async (props: Props, req: Request, ctx: AppContext) => {
   const { loader: { __resolveType, ...loaderProps } } = props;
   const query = new URL(req.url).searchParams.get(NAME ?? "q");
   // @ts-expect-error This is a dynamic resolved loader
-  const suggestion = await ctx.invoke(__resolveType, {
-    ...loaderProps,
-    query,
-  }) as Suggestion | null;
-  return { suggestion };
+  // const suggestion = await ctx.invoke(__resolveType, {
+  //   ...loaderProps,
+  //   query,
+  // }) as Suggestion | null;
+  return { suggestion: null };
 };
 function Suggestions(
   { suggestion }: ComponentProps<typeof loader, typeof action>,
 ) {
   const { products = [], searches = [] } = suggestion ?? {};
-  const hasProducts = Boolean(products.length);
+  const hasProducts = Boolean(products?.length);
   const hasTerms = Boolean(searches.length);
   return (
     <div
@@ -72,7 +72,7 @@ function Suggestions(
             Produtos sugeridos
           </span>
           <Slider class="carousel">
-            {products.map((product, index) => (
+            {products?.map((product, index) => (
               <Slider.Item
                 index={index}
                 class="carousel-item first:ml-4 last:mr-4 min-w-[200px] max-w-[200px]"

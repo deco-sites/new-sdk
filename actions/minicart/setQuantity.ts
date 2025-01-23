@@ -1,13 +1,10 @@
-import type { PropertyValue } from "apps/commerce/types.ts";
-import type { AppContext, Platform } from "../../apps/site.ts";
-import shopify from "../../sdk/cart/shopify/addToCart.ts";
+import { AppContext, Platform } from "../../apps/site.ts";
+import shopify from "../../sdk/cart/shopify/setQuantity.ts";
 import { usePlatform } from "../../sdk/usePlatform.tsx";
 
-export interface AddToCartProps {
-  productId: string;
-  productGroupId: string;
+export interface SetQuantityProps {
+  itemId: string;
   quantity: number;
-  additionalProperties?: PropertyValue[];
 }
 
 const notImplemented = () => {
@@ -16,7 +13,7 @@ const notImplemented = () => {
 
 const actions: Record<
   Platform,
-  (props: AddToCartProps, req: Request, ctx: AppContext) => Promise<unknown>
+  (props: SetQuantityProps, req: Request, ctx: AppContext) => Promise<unknown>
 > = {
   shopify,
   vtex: notImplemented,
@@ -28,7 +25,7 @@ const actions: Record<
 };
 
 export default function action(
-  props: AddToCartProps,
+  props: SetQuantityProps,
   req: Request,
   ctx: AppContext,
 ) {
@@ -37,7 +34,7 @@ export default function action(
   const action = actions[platform];
 
   if (!action) {
-    throw new Error(`No add to cart action found for platform: ${platform}`);
+    throw new Error(`No set quantity action found for platform: ${platform}`);
   }
 
   return action(props, req, ctx);

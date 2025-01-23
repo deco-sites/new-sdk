@@ -3,7 +3,7 @@ import { useId } from "../../sdk/useId.ts";
 import Icon from "../ui/Icon.tsx";
 import { useScript } from "@deco/deco/hooks";
 const onLoad = (id: string) =>
-  window.STOREFRONT.CART.subscribe((sdk) => {
+  window.STOREFRONT.CART.subscribe("cart", (sdk) => {
     const counter = document.getElementById(id);
     const count = sdk.getCart()?.items.length ?? 0;
     if (!counter) {

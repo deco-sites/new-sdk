@@ -1,12 +1,13 @@
+import { useScript } from "@deco/deco/hooks";
 import { AppContext } from "../../apps/site.ts";
 import { MINICART_DRAWER_ID, MINICART_FORM_ID } from "../../constants.ts";
+import { Item } from "../../sdk/cart/sdk.ts";
 import { clx } from "../../sdk/clx.ts";
 import { formatPrice } from "../../sdk/format.ts";
 import { useComponent } from "../../sections/Component.tsx";
 import Coupon from "./Coupon.tsx";
 import FreeShippingProgressBar from "./FreeShippingProgressBar.tsx";
-import CartItem, { Item } from "./Item.tsx";
-import { useScript } from "@deco/deco/hooks";
+import CartItem from "./Item.tsx";
 
 export interface Minicart {
   /** Cart from the ecommerce platform */
@@ -120,24 +121,17 @@ export default function Cart({
   const count = items.length;
   return (
     <>
-      <form
+      <div
         class="contents"
         id={MINICART_FORM_ID}
         hx-sync="this:replace"
-        hx-trigger="cartItemAdded from:body, cartItemUpdated from:body"
+        hx-trigger="cart:itemAdded from:body, cart:ItemUpdated from:body"
         hx-target="this"
         hx-indicator="this"
         hx-disabled-elt="this"
         hx-post={useComponent(import.meta.url)}
         hx-swap="outerHTML"
       >
-        {/* Button to submit the form */}
-        <button hidden autofocus />
-
-        {/* Add to cart controllers */}
-        <input name="add-to-cart" type="hidden" />
-        <button hidden name="action" value="add-to-cart" />
-
         {/* This contains the STOREFRONT cart. */}
         <input
           type="hidden"
@@ -254,7 +248,7 @@ export default function Cart({
               </>
             )}
         </div>
-      </form>
+      </div>
       <script
         type="module"
         dangerouslySetInnerHTML={{

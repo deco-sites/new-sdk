@@ -1,15 +1,10 @@
-import { AnalyticsItem } from "apps/commerce/types.ts";
+import { useScript } from "@deco/deco/hooks";
 import Image from "apps/website/components/Image.tsx";
+import { Item } from "../../sdk/cart/sdk.ts";
 import { clx } from "../../sdk/clx.ts";
 import { formatPrice } from "../../sdk/format.ts";
 import Icon from "../ui/Icon.tsx";
 import QuantitySelector from "../ui/QuantitySelector.tsx";
-import { useScript } from "@deco/deco/hooks";
-
-export type Item = AnalyticsItem & {
-  listPrice: number;
-  image: string;
-};
 
 export interface Props {
   item: Item;
@@ -17,24 +12,26 @@ export interface Props {
   locale: string;
   currency: string;
 }
+
 const QUANTITY_MAX_VALUE = 100;
+
 const removeItemHandler = () => {
-  const itemID = (event?.currentTarget as HTMLButtonElement | null)
+  const itemId = (event?.currentTarget as HTMLButtonElement | null)
     ?.closest("fieldset")
     ?.getAttribute("data-item-id");
-  if (typeof itemID === "string") {
-    window.STOREFRONT.CART.setQuantity({ id: itemID, quantity: 0 });
+  if (typeof itemId === "string") {
+    window.STOREFRONT.CART.setQuantity({ itemId, quantity: 0 });
   }
 };
+
 function CartItem({ item, index, locale, currency }: Props) {
   const { image, listPrice, price = Infinity, quantity } = item;
   const isGift = price < 0.01;
-  // deno-lint-ignore no-explicit-any
-  const name = (item as any).item_name;
+  const name = item.item_name;
+
   return (
     <fieldset
-      // deno-lint-ignore no-explicit-any
-      data-item-id={(item as any).item_id}
+      data-item-id={item.item_group_id}
       class="grid grid-rows-1 gap-2"
       style={{ gridTemplateColumns: "auto 1fr" }}
     >

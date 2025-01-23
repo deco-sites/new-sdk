@@ -1,10 +1,10 @@
-import { AnalyticsItem, Product } from "apps/commerce/types.ts";
-import { JSX } from "preact";
+import { useScript } from "@deco/deco/hooks";
+import type { AnalyticsItem, Product } from "apps/commerce/types.ts";
+import type { JSX } from "preact";
+import type { AddToCartProps } from "../../sdk/cart/sdk.ts";
 import { clx } from "../../sdk/clx.ts";
 import { useId } from "../../sdk/useId.ts";
-import { usePlatform } from "../../sdk/usePlatform.tsx";
 import QuantitySelector from "../ui/QuantitySelector.tsx";
-import { useScript } from "@deco/deco/hooks";
 
 export interface Props extends JSX.HTMLAttributes<HTMLButtonElement> {
   product: Product;
@@ -12,32 +12,23 @@ export interface Props extends JSX.HTMLAttributes<HTMLButtonElement> {
   item: AnalyticsItem;
 }
 
-const onClick = async () => {
+const onClick = async (props: AddToCartProps) => {
   event?.stopPropagation();
-  const button = event?.currentTarget as HTMLButtonElement | null;
-  const container = button!.closest<HTMLDivElement>("div[data-cart-item]")!;
-  const { item, platformProps } = JSON.parse(
-    decodeURIComponent(container.getAttribute("data-cart-item")!),
-  );
-  await window.STOREFRONT.CART.addToCart({ item, platformProps });
-  alert("Added to cart");
+  await window.STOREFRONT.CART.addToCart(props);
 };
 
-const onChange = () => {
+const onChange = (productId: string) => {
   const input = event!.currentTarget as HTMLInputElement;
-  const productID = input!
-    .closest("div[data-cart-item]")!
-    .getAttribute("data-item-id")!;
   const quantity = Number(input.value);
   if (!input.validity.valid) {
     return;
   }
-  window.STOREFRONT.CART.setQuantity(productID, quantity);
+  window.STOREFRONT.CART.setQuantity({ itemId: productId, quantity });
 };
 
 // Copy cart form values into AddToCartButton
 const onLoad = ({ productId, id }: { productId: string; id: string }) => {
-  window.STOREFRONT.CART.subscribe((sdk) => {
+  window.STOREFRONT.CART.subscribe("cart", (sdk) => {
     const container = document.getElementById(id);
     const checkbox = container?.querySelector<HTMLInputElement>(
       'input[type="checkbox"]',
@@ -49,9 +40,9 @@ const onLoad = ({ productId, id }: { productId: string; id: string }) => {
     if (!input || !checkbox) {
       return;
     }
-    
-    const quantity = sdk.getQuantity(productId);
-    input.value = quantity?.toString() || "0";
+
+    const quantity = sdk.getQuantity(productId) || 0;
+    input.value = quantity.toString();
     checkbox.checked = quantity > 0;
 
     container?.querySelectorAll<HTMLButtonElement>("button").forEach((node) =>
@@ -63,73 +54,22 @@ const onLoad = ({ productId, id }: { productId: string; id: string }) => {
   });
 };
 
-const useAddToCart = ({ product, seller }: Props) => {
-  const platform = usePlatform();
-  const { additionalProperty = [], isVariantOf, productID } = product;
-  const productGroupID = isVariantOf?.productGroupID;
-  if (platform === "vtex") {
-    return {
-      allowedOutdatedData: ["paymentData"],
-      orderItems: [{ quantity: 1, seller: seller, id: productID }],
-    };
-  }
-  if (platform === "shopify") {
-    return { lines: { merchandiseId: productID } };
-  }
-  if (platform === "vnda") {
-    return {
-      quantity: 1,
-      itemId: productID,
-      attributes: Object.fromEntries(
-        additionalProperty.map(({ name, value }) => [name, value]),
-      ),
-    };
-  }
-  if (platform === "wake") {
-    return {
-      productVariantId: Number(productID),
-      quantity: 1,
-    };
-  }
-  if (platform === "nuvemshop") {
-    return {
-      quantity: 1,
-      itemId: Number(productGroupID),
-      add_to_cart_enhanced: "1",
-      attributes: Object.fromEntries(
-        additionalProperty.map(({ name, value }) => [name, value]),
-      ),
-    };
-  }
-  if (platform === "linx") {
-    return {
-      ProductID: productGroupID,
-      SkuID: productID,
-      Quantity: 1,
-    };
-  }
-  return null;
-};
-
-function AddToCartButton(props: Props) {
-  const { product, item, class: _class } = props;
-  const platformProps = useAddToCart(props);
+export default function AddToCartButton(props: Props) {
+  const { product, class: _class } = props;
   const id = useId();
+
   return (
-    <div
-      id={id}
-      class="flex"
-      data-item-id={product.productID}
-      data-cart-item={encodeURIComponent(
-        JSON.stringify({ item, platformProps }),
-      )}
-    >
+    <div id={id} class="flex">
       <input type="checkbox" class="hidden peer" />
 
       <button
         disabled
         class={clx("flex-grow peer-checked:hidden", _class?.toString())}
-        hx-on:click={useScript(onClick)}
+        hx-on:click={useScript(onClick, {
+          productId: product.productID,
+          productGroupId: product.isVariantOf?.productGroupID || "",
+          quantity: 1,
+        })}
       >
         Add to Cart
       </button>
@@ -140,15 +80,16 @@ function AddToCartButton(props: Props) {
           disabled
           min={0}
           max={100}
-          hx-on:change={useScript(onChange)}
+          hx-on:change={useScript(onChange, product.productID)}
         />
       </div>
 
       <script
         type="module"
-        dangerouslySetInnerHTML={{ __html: useScript(onLoad, {id, productId: product.productID}) }}
+        dangerouslySetInnerHTML={{
+          __html: useScript(onLoad, { id, productId: product.productID }),
+        }}
       />
     </div>
   );
 }
-export default AddToCartButton;

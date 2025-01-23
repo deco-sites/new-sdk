@@ -4,15 +4,19 @@ import { toFileUrl } from "std/path/mod.ts";
 import type { AppContext } from "../apps/site.ts";
 import { useSection } from "@deco/deco/hooks";
 import { type SectionProps } from "@deco/deco";
+
 interface Props {
   component: string;
   props?: Record<string, unknown>;
 }
+
 export type ComponentProps<LoaderFunc, ActionFunc = LoaderFunc> = SectionProps<
   LoaderFunc,
   ActionFunc
 >;
+
 const ROOT = toFileUrl(Deno.cwd()).href;
+
 export class ErrorBoundary extends Component<{
   fallback?: ComponentType<{
     error: Error;
@@ -20,8 +24,8 @@ export class ErrorBoundary extends Component<{
 }, {
   error: Error | null;
 }> {
-  state = { error: null };
-  static getDerivedStateFromError(error: Error) {
+  override state = { error: null };
+  getDerivedStateFromError(error: Error) {
     return { error };
   }
   render() {
